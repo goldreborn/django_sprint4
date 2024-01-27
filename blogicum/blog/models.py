@@ -1,13 +1,11 @@
-from typing import Any
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from users.models import Profile
+from .validators import post_pub_time
 from django.contrib.auth import get_user_model
-from .validators import user_age, post_pub_time
-
-User = get_user_model()
 
 MAX_CHAR_LENGTH = 256
 
+User = get_user_model()
 
 class AbstractModel(models.Model):
 
@@ -50,6 +48,7 @@ class Category(AbstractModel):
     def __str__(self) -> str:
         return self.title
 
+
 class Tag(models.Model):
 
     tag = models.CharField('Тег', max_length=20)
@@ -72,31 +71,6 @@ class Location(AbstractModel):
     def __str__(self) -> str:
         return self.name
 
-class Profile(AbstractUser):
-
-    first_name = models.CharField('Имя', max_length=20)
-    last_name = models.CharField(
-        'Фамилия', blank=True, help_text='Необязательное поле', max_length=20
-    )
-    birthday = models.DateField('Дата рождения', validators=(user_age,))
-    image = models.ImageField('Фото', upload_to='profiles_images', blank=True)
-    tags = models.ManyToManyField(
-        Tag,
-        verbose_name='Теги',
-        blank=True,
-        help_text='Удерживайте Ctrl для выбора нескольких вариантов'
-    ) 
-    username = models.CharField(
-        max_length=MAX_CHAR_LENGTH,
-        verbose_name='юзернэйм',
-    )
-
-    is_staff = models.BooleanField(
-        default=False,
-        verbose_name='Суперпользователь',
-    )
-
-    date_joined = models.DateTimeField()
 
 class Post(AbstractModel):
 
@@ -110,12 +84,12 @@ class Post(AbstractModel):
 
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
-        validators = (post_pub_time,),
+        validators=(post_pub_time,),
         help_text='Если установить дату и время в будущем '
                   '— можно делать отложенные публикации.')
 
     author = models.ForeignKey(
-        Profile,
+        User,
         on_delete=models.CASCADE,
         related_name='posts',
         verbose_name='Автор публикации'
@@ -128,6 +102,8 @@ class Post(AbstractModel):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    image = models.ImageField('Фото', upload_to='posts_images', blank=True)
 
     category = models.ForeignKey(
         Category,
@@ -144,3 +120,17 @@ class Post(AbstractModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class Comment(models.Model):
+    text = models.TextField('Напишите комментарий')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comment',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('created_at',)

@@ -11,11 +11,12 @@ LOGIN_REDIRECT_URL = 'blog:index'
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = 'blog.profile_views.Profile'
+AUTH_USER_MODEL = 'blog.Profile'
 
 INSTALLED_APPS = [
     'pages.apps.PagesConfig',
     'blog.apps.BlogConfig',
+    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -97,5 +98,5 @@ STATICFILES_DIRS = [BASE_DIR / 'static_dev']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_FAILURE_VIEW = f'{TEMPLATES_PATH}.views.csrf_failure'
+CSRF_FAILURE_VIEW = 'blog.views.csrf_failure_error'
 

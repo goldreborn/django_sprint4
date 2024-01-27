@@ -2,24 +2,28 @@
 from django import forms
 
 # Импортируем класс модели Birthday.
-from .models import Profile
-from django.core.exceptions import ValidationError
-from django.contrib.auth import get_user_model
+from .models import Profile, Post, Comment
 
-User = get_user_model()
-
-class ProfileForm(forms.ModelForm):
+class CommentForm(forms.ModelForm):
 
     ...
 
     class Meta:
+        
+        model = Comment
 
-        model = User
+        fields = ('text',)
+
+
+class PostForm(forms.ModelForm):
+
+    def clean(self):
+
+        super().clean()
+
+    class Meta:
+
+        model = Post
 
         fields = '__all__'
-        exclude = ('password', )
 
-        widgets = {
-            'age': '',
-            'age': '',
-        }
