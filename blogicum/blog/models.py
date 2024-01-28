@@ -1,11 +1,12 @@
 from django.db import models
-from users.models import Profile
 from .validators import post_pub_time
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 MAX_CHAR_LENGTH = 256
 
 User = get_user_model()
+
 
 class AbstractModel(models.Model):
 
@@ -44,6 +45,9 @@ class Category(AbstractModel):
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
+
+    def get_absolute_url(self):
+        return reverse("blog:category_posts", kwargs={'slug': self.slug})
 
     def __str__(self) -> str:
         return self.title
@@ -95,6 +99,13 @@ class Post(AbstractModel):
         verbose_name='Автор публикации'
     )
 
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name='Теги',
+        blank=True,
+        help_text='Удерживайте Ctrl для выбора нескольких вариантов'
+    )
+
     location = models.ForeignKey(
         Location,
         verbose_name='Местоположение',
@@ -118,6 +129,9 @@ class Post(AbstractModel):
         verbose_name_plural = 'Публикации'
         ordering = ['-pub_date']
 
+    def get_absolute_url(self):
+        return reverse('blog:detail', kwargs={'pk': self.pk}) 
+
     def __str__(self) -> str:
         return self.title
 
@@ -130,7 +144,7 @@ class Comment(models.Model):
         related_name='comment',
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ('created_at',)

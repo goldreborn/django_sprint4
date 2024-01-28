@@ -11,19 +11,18 @@ LOGIN_REDIRECT_URL = 'blog:index'
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = 'blog.Profile'
+MEDIA_ROOT = BASE_DIR / 'media' 
 
 INSTALLED_APPS = [
     'pages.apps.PagesConfig',
     'blog.apps.BlogConfig',
-    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_bootstrap5'
+    'django_bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -41,6 +40,8 @@ ROOT_URLCONF = 'blogicum.urls'
 TEMPLATES_PATH = 'templates'
 
 TEMPLATES_DIR = BASE_DIR / TEMPLATES_PATH
+
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
 TEMPLATES = [
     {
@@ -99,4 +100,3 @@ STATICFILES_DIRS = [BASE_DIR / 'static_dev']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_FAILURE_VIEW = 'blog.views.csrf_failure_error'
-

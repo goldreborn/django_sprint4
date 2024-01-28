@@ -1,15 +1,13 @@
-# birthday/forms.py
 from django import forms
 
-# Импортируем класс модели Birthday.
-from .models import Profile, Post, Comment
+from .models import Post, Comment
 
 class CommentForm(forms.ModelForm):
 
     ...
 
     class Meta:
-        
+
         model = Comment
 
         fields = ('text',)
@@ -26,4 +24,9 @@ class PostForm(forms.ModelForm):
         model = Post
 
         fields = '__all__'
+
+        widgets = {
+            'pub_date': forms.DateInput(attrs={'type': 'date'}),
+            'tags': forms.Textarea()
+        }
 

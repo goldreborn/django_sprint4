@@ -1,11 +1,10 @@
-
-from blogicum.settings import TEMPLATES_PATH
-from os import listdir
 from django.shortcuts import render
-from inspect import getmembers
 
-
-ERROR_TEMPLATES = listdir(f'{TEMPLATES_PATH}/pages/errors/')
+ERROR_TEMPLATES = [
+    '403csrf.html',
+    '404.html',
+    '500.html'
+]
 
 
 class Handler(Exception):
@@ -16,6 +15,6 @@ class Handler(Exception):
             if str(error_type) in x:
                 return render(
                     request=request,
-                    template_name=f'{TEMPLATES_PATH}{x}',
+                    template_name=f'pages/errors/{x}',
                     status=error_type
                 )

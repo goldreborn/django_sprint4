@@ -1,5 +1,5 @@
 from django.urls import path
-from blogicum.settings import TEMPLATES_PATH
+from django.contrib.auth.views import PasswordResetConfirmView
 
 from . import views
 
@@ -12,25 +12,35 @@ handler500 = 'blog.views.template_error'
 
 urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
-    path('profile/<slug:profile_slug>/',
-         views.ProfileDetailView.as_view()),
-    path('posts/<int:post_id>/',
+
+
+    path('profile/<slug:username>/edit/',
+         views.ProfileUpdateView.as_view(),
+         name='edit_profile'),
+
+    path('profile/<slug:username>/',
+         views.ProfileDetailView.as_view(),
+         name='profile'),
+    path('posts/<int:pk>/',
          views.PostDetailView.as_view(),
          name='post_detail'),
-    path('category/<slug:category_slug>/',
+
+    path('category/<slug:slug>/',
          views.PostCategoryListView.as_view(),
          name='category_posts'),
-    path('posts/<int:post_id>/edit/',
+
+    path('posts/<int:pk>/edit/',
          views.PostUpdateView.as_view(),
-         name='post_edit'),
-    path('posts/<int:post_id>/delete/',
+         name='edit_post'),
+
+    path('posts/<int:pk>/delete/',
          views.PostDeleteView.as_view(),
-         name='post_delete'),
+         name='delete_post'),
+
     path('posts/create/',
          views.PostCreateView.as_view(),
-         name='post_create'),
+         name='create_post'),
+
     path('logged_in_only/', views.only_for_logged_in),
-    path('<int:pk>/comment/', views.add_comment, name='add_comment'),
-    path('<int:pk>/comment/edit/', views.edit_comment, name='edit_comment'),
-    path('<int:pk>/comment/delete/', views.delete_comment, name='delete_comment'),
+    path('<int:pk>/comment/', views.CommentCreateView.as_view(), name='add_comment')
 ]

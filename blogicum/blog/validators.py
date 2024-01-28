@@ -12,8 +12,8 @@ def user_age(age: date) -> None:
         )
 
 
-def post_pub_time(pub: date):
-    if pub > today:
+def post_pub_time(pub):
+    if pub.date() > today:
         raise ValidationError(
             'Пост из будущего не может быть опубликован'
         )

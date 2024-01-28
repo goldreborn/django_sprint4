@@ -1,15 +1,17 @@
 from typing import Any
-from django.db.models.query import QuerySet
+from django.db.models.base import Model as Model
+
 from django.shortcuts import (
-    get_object_or_404, redirect, render, HttpResponse
+    HttpResponse as HttpResponse, get_object_or_404, redirect, render
 )
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
 )
 
+from django.views.generic.edit import FormMixin
+from django.contrib import messages
 from django.urls import reverse_lazy, reverse
-
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -17,8 +19,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from functools import wraps
 
-from users.models import Profile
-from .models import Post, Comment
+from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
 from .handler import Handler
 
@@ -41,27 +42,77 @@ PROFILE_CHANGEBLES = [
     'birthday'
 ]
 
+def accuire_querry(obj):
+
+    return obj.objects.select_related(
+        'location', 'author', 'category'
+    )
+
 
 class PostListView(ListView):
     model = Post
-    ordering = '-date_published'
+    ordering = '-created_at'
     paginate_by = POSTS_PER_PAGE
 
+    template_name = 'blog/index.html'
+    
+    def get_queryset(self):
+    
+        query = Post.objects.select_related(
+                'author', 'location', 'category'
+            ).filter(
+                is_published=True,
+                category__is_published=True
+            )
 
-class PostCategoryListView(PostListView):
-    queryset = Post.objects.prefetch_related(
-        'category'
-    )
+        return query
+
+
+class PostCategoryListView(ListView):
+    model = Post
+    form_class = PostForm
+    ordering = '-created_at'
+    paginate_by = POSTS_PER_PAGE
+
+    template_name = 'blog/category.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self._category = get_object_or_404(Category, slug=kwargs['slug'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+
+        return {
+            'category': {
+                'title': self._category.title,
+                'description': self._category.description
+            },
+            'page_obj': accuire_querry(Post).filter(
+                category__slug=self._category.slug,
+                category__is_published=True,
+                is_published=True
+            )
+        }
 
 
 class PostCreateView(CreateView, LoginRequiredMixin):
     model = Post
     form_class = PostForm
-
-    fields = '__all__'
     template_name = 'blog/create.html'
+    success_url = reverse_lazy('blog:index')
+
+
+    def dispatch(self, request, *args, **kwargs):
+
+        if not request.user.is_authenticated:
+            raise PermissionDenied
+        self._form = PostForm(request.POST or None)
+
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+
+        form.save()
         form.instance.author = self.request.user
         return super().form_valid(form)
 
@@ -69,73 +120,101 @@ class PostCreateView(CreateView, LoginRequiredMixin):
 class PostUpdateView(UpdateView, LoginRequiredMixin):
     model = Post
     form_class = PostForm
-
-    fields = '__all__'
+    template_name = 'blog/create.html'
+    success_url = reverse_lazy('blog:index')
 
 
 class PostDeleteView(DeleteView, LoginRequiredMixin):
     model = Post
-    success_url = reverse_lazy('blog:index')
+    form_class = PostForm
+    template_name = 'blog/index.html'
+    
+
+    def dispatch(self, request, *args, **kwargs):
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
+        self._form = PostForm(request.POST or None, instance=self._post, files=request.FILES)
+        self._post.delete
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse('blog:post_detail', kwargs={'pk': self._post.pk})
 
 
-class PostDetailView(DetailView):
+class PostDetailView(DetailView, FormMixin):
     model = Post
+    form_class = CommentForm
+    template_name = 'blog/detail.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = CommentForm()
-        context['comments'] = (
-            self.object.Comment.select_related('author')
+    def dispatch(self, request, *args, **kwargs):
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+
+        return super().get_queryset().filter(
+            pk=self._post.pk
         )
-        return context
 
 
 class ProfileDetailView(DetailView):
     model = User
     ordering = '-created_at'
     paginate_by = POSTS_PER_PAGE
+    template_name = 'blog/profile.html'
 
-    def get_queryset(self) -> QuerySet[Any]:
+    def get_object(self):
+        return User.objects.get(username=self.kwargs.get("username"))
 
-        query_set = super().get_queryset()
+    def dispatch(self, request, *args, **kwargs):
 
-        query_set.prefetch_related(
-            'posts'
-        ).filter(
-            author=self.request.user
-        )
+        self._user = User(username=kwargs['username'])
 
-        return query_set
+        return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
 
-        if not self.request.user.is_authenticated:
-            context = {filter(
-                lambda x: x if 'password' not in x else None,
-                context
-            )}
+        return {
+            'profile': self._user,
+            'page_obj': accuire_querry(Post).filter(
+                author__username=self._user.get_username()
+            ),
+            'comment_form': CommentForm()
+        }
 
-        profile = {'profile': context}
 
-        return profile
+class ProfileUpdateView(UpdateView, LoginRequiredMixin):
+    model = User
+    from_class = PostForm
+    template_name = 'blog/profile.html'
+    success_url = reverse_lazy('blog:profile')
+    fields = '__all__'
+
+    def get_object(self):
+        return User.objects.get(username=self.kwargs.get("username"))
 
 
 class CommentCreateView(CreateView, LoginRequiredMixin):
     model = Comment
     form_class = CommentForm
 
+    template_name = 'blog/comment.html'
+
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.author = self.request.user
-        form.instance.post = self._post
+
+        form = form.save(commit=False)
+
+        form.author = self.request.user
+        form.post = self._post
+
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('post:detail', kwargs={'pk': self._post.pk})
+        return reverse('blog:post_detail', kwargs={'pk': self._post.pk})
 
 
 def identity_required(instance):
@@ -158,38 +237,7 @@ def only_for_logged_in():
     )
 
 
-def edit_instance(obj, request, pk, changebles):
-
-    instance = get_object_or_404(obj, pk=pk)
-    instance_name = obj.__name__.lower()
-
-    form = globals()[f'{obj}Form']()(request.POST or None, instance=instance)
-
-    context = {'form': form}
-
-    if form.is_valid():
-        form.save()
-        new_changes = {i: form.cleaned_data[i] for i in changebles}
-
-        context.update(new_changes)
-    return render(request, f'{instance_name}:detail', context)
-
-
-def delete_instance(obj, request, pk):
-
-    instance = get_object_or_404(obj, pk=pk)
-    instance_name = obj.__name__.lower()
-
-    form = obj(instance=instance)
-
-    context = {'form': form}
-
-    if request.method == 'POST':
-        instance.delete()
-        return redirect('blog:index')
-    return render(request, f'{instance_name}/{instance_name}.html', context)
-
-
+@identity_required(Comment)
 @login_required
 def add_comment(request, pk):
 
@@ -205,48 +253,12 @@ def add_comment(request, pk):
     return redirect('post:detail', pk=pk)
 
 
-@login_required
-@identity_required(Comment)
-def edit_comment(request, pk):
-    edit_instance(Comment, request, pk, COMMENT_CHANGEBLES)
-
-
-@login_required
-@identity_required(Profile)
-def edit_profile(request, pk):
-    edit_instance(Profile, request, pk, PROFILE_CHANGEBLES)
-
-
-@login_required
-@identity_required(Post)
-def edit_post(request, pk):
-    edit_instance(Post, request, pk, POST_CHANGEBLES)
-
-
-@login_required
-@identity_required(Comment)
-def delete_comment(request, pk):
-    delete_instance(Comment, request, pk)
-
-
-@login_required
-@identity_required(Post)
-def delete_post(request, pk):
-    delete_instance(Post, request, pk)
-
-
-@login_required
-@identity_required(Profile)
-def password_change(request, pk):
-    pass
-
-
 def csrf_failure_error(request, reason=''):
     return Handler._error_(request, 403)
 
 
 def page_not_found_error(request, reason=''):
-    return Handler._error_(request, 403)
+    return Handler._error_(request, 404)
 
 
 def template_error(request, reason=''):
