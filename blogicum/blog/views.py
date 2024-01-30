@@ -14,6 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.core.paginator import Paginator
 from django.views.generic.list import MultipleObjectMixin
 
 from .models import Post, Comment, Category
@@ -39,9 +40,6 @@ PROFILE_CHANGEBLES = [
     'last_name',
     'birthday'
 ]
-
-
-'''Ох и намучился я с этими вью....'''
 
 
 def accuire_querry(obj):
@@ -73,7 +71,7 @@ class PostListView(ListView):
         query = accuire_querry(Post).filter(
             is_published=True,
             category__is_published=True,
-            pub_date__lte=date.today()
+            pub_date__lt=date.today()
         )
 
         return query
@@ -223,9 +221,9 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
 
         return {
             'profile': self._user,
-            'page_obj': accuire_querry(Post).filter(
+            'page_obj': Paginator(accuire_querry(Post).filter(
                 author__username=self._user.get_username()
-            ),
+            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page')),
         }
 
 
