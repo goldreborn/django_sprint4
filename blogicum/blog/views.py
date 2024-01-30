@@ -13,10 +13,12 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
+from django.http import Http404
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
 from .handler import Handler
+from datetime import date
 
 User = get_user_model()
 
@@ -69,7 +71,8 @@ class PostListView(ListView):
 
         query = accuire_querry(Post).filter(
             is_published=True,
-            category__is_published=True
+            category__is_published=True,
+            pub_date__lt=date.today()
         )
 
         return query
@@ -85,6 +88,10 @@ class PostCategoryListView(ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
+
+        if self._category.is_published is False:
+            raise Http404
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -169,6 +176,7 @@ class PostDetailView(DetailView):
     model = Post
     form_class = CommentForm
     template_name = 'blog/detail.html'
+    
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
