@@ -14,6 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.views.generic.list import MultipleObjectMixin
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
@@ -203,7 +204,7 @@ class PostDetailView(DetailView):
         return context
 
 
-class ProfileDetailView(DetailView):
+class ProfileDetailView(DetailView, MultipleObjectMixin):
     model = User
     ordering = '-created_at'
     paginate_by = POSTS_PER_PAGE
