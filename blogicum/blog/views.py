@@ -100,12 +100,12 @@ class PostCategoryListView(ListView):
                 'title': self._category.title,
                 'description': self._category.description
             },
-            'page_obj': accuire_querry(Post).filter(
+            'page_obj': Paginator(accuire_querry(Post).filter(
                 category__slug=self._category.slug,
                 category__is_published=True,
                 is_published=True,
                 pub_date__lte=date.today()
-            )
+            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
         }
 
 
