@@ -66,6 +66,9 @@ class PostListView(ListView):
 
     template_name = 'blog/index.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
 
         query = accuire_querry(Post).filter(
@@ -73,6 +76,11 @@ class PostListView(ListView):
             category__is_published=True,
             pub_date__lt=date.today()
         )
+
+        for mod in query:
+            mod.comment_count = Comment.objects.filter(
+                post__pk=mod.pk
+            ).count()
 
         return query
 
@@ -257,9 +265,6 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
 
-    def get_object(self):
-        return Comment.objects.get(pk=self.kwargs.get('comk'))
-
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._comment = Comment(pk=kwargs['comk'])
@@ -283,9 +288,6 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
     model = Comment
     form_class = CommentForm
-
-    def get_object(self):
-        return Comment.objects.get(pk=self.kwargs.get('comk'))
 
     def dispatch(self, request, *args, **kwargs):
         self._comment = Comment(pk=kwargs['comk'])
@@ -328,7 +330,7 @@ def only_for_logged_in():
     )
 
 
-def permission_denied(request, exception=None, template_name='403csrf.html'):
+def permission_denied(request, reason=None, template_name='403csrf.html'):
     return Handler._error_(request, 403)
 
 

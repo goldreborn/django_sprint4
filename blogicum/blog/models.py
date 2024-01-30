@@ -90,7 +90,7 @@ class Post(AbstractModel):
         verbose_name='Дата и время публикации',
         validators=(post_pub_time,),
         help_text='Если установить дату и время в будущем '
-                  '— можно делать отложенные публикации.')
+                  '— можно делать отложенные публикации.', default=None)
 
     author = models.ForeignKey(
         User,
@@ -124,6 +124,8 @@ class Post(AbstractModel):
         on_delete=models.SET_NULL,
         null=True,
     )
+
+    comment_count = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = 'публикация'
