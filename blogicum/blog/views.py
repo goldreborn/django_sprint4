@@ -26,21 +26,6 @@ User = get_user_model()
 
 POSTS_PER_PAGE = 10
 
-POST_CHANGEBLES = [
-    'title',
-    'text'
-]
-
-COMMENT_CHANGEBLES = [
-    'text'
-]
-
-PROFILE_CHANGEBLES = [
-    'first_name',
-    'last_name',
-    'birthday'
-]
-
 
 def accuire_querry(obj):
 
@@ -49,12 +34,29 @@ def accuire_querry(obj):
     )
 
 
+def comments_count(query):
+
+    for mod in query:
+        mod.comment_count = Comment.objects.filter(
+            post__pk=mod.pk
+        ).count()
+
+
 class PermissionMixin(UserPassesTestMixin):
 
     def dispatch(self, request, *args, **kwargs):
         self._user = User(username=request.user.get_username())
         self._post = Post(author=self._user.get_username())
         self._comment = Comment(author=self._user.get_username())
+        self._ownership = False
+
+        if self._post.author == self._user or self._comment.author == self._user:
+            self._ownership = True
+        else:
+            self._ownership = None
+
+        if self._ownership is not True:
+            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -77,10 +79,7 @@ class PostListView(ListView):
             pub_date__lt=date.today()
         )
 
-        for mod in query:
-            mod.comment_count = Comment.objects.filter(
-                post__pk=mod.pk
-            ).count()
+        comments_count(query)
 
         return query
 
@@ -103,7 +102,7 @@ class PostCategoryListView(ListView):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
 
-        return {
+        context = {
             'category': {
                 'title': self._category.title,
                 'description': self._category.description
@@ -115,6 +114,10 @@ class PostCategoryListView(ListView):
                 pub_date__lte=date.today()
             ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
         }
+
+        comments_count(context['page_obj'])
+
+        return context
 
 
 class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
@@ -225,22 +228,28 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
     template_name = 'blog/profile.html'
 
     def get_object(self):
-        return get_object_or_404(User, username=self.kwargs.get('username'))
+        return User(username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
 
-        self._user = User(username=kwargs['username'])
+        self._user = User.objects.get(
+            username=kwargs['username']
+        )
 
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
 
-        return {
+        context = {
             'profile': self._user,
             'page_obj': Paginator(accuire_querry(Post).filter(
                 author__username=self._user.get_username()
-            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page')),
+            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
         }
+
+        comments_count(context['page_obj'])
+
+        return context
 
 
 class CommentCreateView(CreateView, LoginRequiredMixin):
