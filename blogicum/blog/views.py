@@ -128,9 +128,10 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
         form.save()
         form.instance.author = self.request.user
         return super().form_valid(form)
-    
+
     def get_success_url(self):
-        return reverse('blog:profile', kwargs={'username': self._user.get_username()})
+        return reverse('blog:profile',
+                       kwargs={'username': self._user.get_username()})
 
 
 class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
