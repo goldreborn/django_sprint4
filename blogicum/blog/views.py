@@ -181,10 +181,10 @@ class PostDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
 
         if request.method is request.POST:
             self._post.delete()
-        
+
         if not request.user.is_authenticated:
             return redirect("login")
-        
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
