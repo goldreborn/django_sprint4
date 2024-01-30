@@ -9,4 +9,3 @@ urlpatterns = [
     path('rules/',
          TemplateView.as_view(template_name="pages/rules.html"), name='rules'),
 ]
-
