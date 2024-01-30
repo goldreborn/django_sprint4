@@ -113,9 +113,10 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
-    success_url = reverse_lazy('blog:index')
 
     def dispatch(self, request, *args, **kwargs):
+
+        self._user = request.user
 
         if not request.user.is_authenticated:
             raise PermissionDenied
@@ -127,6 +128,9 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
         form.save()
         form.instance.author = self.request.user
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('blog:profile', kwargs={'username': self._user.get_username()})
 
 
 class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
@@ -209,9 +213,6 @@ class ProfileDetailView(DetailView):
     def dispatch(self, request, *args, **kwargs):
 
         self._user = User(username=kwargs['username'])
-
-        if self._user not in User.objects.all():
-            raise Http404
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -320,13 +321,13 @@ def only_for_logged_in():
     )
 
 
-def permission_denied(request, reason=''):
+def permission_denied(request, reason=None, template_name='403csrf.html'):
     return Handler._error_(request, 403)
 
 
-def page_not_found(request, reason=''):
+def page_not_found(request, exception=None, template_name='404.html'):
     return Handler._error_(request, 404)
 
 
-def server_error(request, reason=''):
+def server_error(request, exception=None, template_name='500.html'):
     return Handler._error_(request, 500)
