@@ -72,7 +72,7 @@ class PostListView(ListView):
         query = accuire_querry(Post).filter(
             is_published=True,
             category__is_published=True,
-            pub_date__lt=date.today()
+            pub_date__lte=date.today()
         )
 
         return query
@@ -104,7 +104,8 @@ class PostCategoryListView(ListView):
             'page_obj': accuire_querry(Post).filter(
                 category__slug=self._category.slug,
                 category__is_published=True,
-                is_published=True
+                is_published=True,
+                pub_date__lte=date.today()
             )
         }
 
