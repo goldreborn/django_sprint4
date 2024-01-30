@@ -42,11 +42,15 @@ PROFILE_CHANGEBLES = [
 ]
 
 
+'''Ох и намучился я с этими вью....'''
+
+
 def accuire_querry(obj):
 
     return obj.objects.select_related(
         'location', 'author', 'category'
     )
+
 
 class PermissionMixin(UserPassesTestMixin):
 
@@ -56,8 +60,6 @@ class PermissionMixin(UserPassesTestMixin):
         self._comment = Comment(author=self._user.get_username())
 
         return super().dispatch(request, *args, **kwargs)
-    
-   
 
 
 class PostListView(ListView):
@@ -109,7 +111,6 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
     form_class = PostForm
     template_name = 'blog/create.html'
     success_url = reverse_lazy('blog:index')
-
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -206,11 +207,6 @@ class ProfileDetailView(DetailView):
 
         self._user = User(username=kwargs['username'])
 
-        try:
-            user = User(username=request.user.get_username())
-        except:
-            raise Http404
-
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -252,7 +248,7 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
     form_class = CommentForm
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
-    
+
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._comment = Comment(pk=kwargs['comk'])
@@ -290,7 +286,7 @@ class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
 
 class ProfileEditUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 
-    template_name ='blog/user.html'
+    template_name = 'blog/user.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)

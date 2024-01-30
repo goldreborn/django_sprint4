@@ -4,7 +4,6 @@ from django.core.mail import send_mail
 from .models import Post, Comment
 
 
-
 class CommentForm(forms.ModelForm):
 
     ...

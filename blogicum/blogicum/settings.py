@@ -9,8 +9,8 @@ DEBUG = True
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'blog:index'
 
-ALLOWED_HOSTS = [] 
-MEDIA_ROOT = BASE_DIR / 'media' 
+ALLOWED_HOSTS = []
+MEDIA_ROOT = BASE_DIR / 'media'
 
 INSTALLED_APPS = [
     'pages.apps.PagesConfig',
@@ -42,7 +42,7 @@ TEMPLATES_DIR = BASE_DIR / TEMPLATES_PATH
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
-EMAIL_FILE_PATH = BASE_DIR / 'sent_emails' 
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 
 TEMPLATES = [
     {

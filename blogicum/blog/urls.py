@@ -38,7 +38,7 @@ urlpatterns = [
          name='create_post'),
 
     path('logged_in_only/', views.only_for_logged_in),
-    
+
     path('post/<int:pk>/comment/',
          views.CommentCreateView.as_view(), name='add_comment'),
 
