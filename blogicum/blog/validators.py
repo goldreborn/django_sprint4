@@ -17,4 +17,3 @@ def post_pub_time(pub):
         raise ValidationError(
             'Пост из будущего не может быть опубликован'
         )
-

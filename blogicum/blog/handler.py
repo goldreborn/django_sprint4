@@ -7,7 +7,7 @@ ERROR_TEMPLATES = [
 ]
 
 
-class Handler(Exception):
+class Handler():
 
     @staticmethod
     def _error_(request, error_type: int):
@@ -15,6 +15,6 @@ class Handler(Exception):
             if str(error_type) in x:
                 return render(
                     request=request,
-                    template_name=f'pages/errors/{x}',
+                    template_name=f'pages/{x}',
                     status=error_type
                 )

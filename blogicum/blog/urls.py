@@ -1,26 +1,22 @@
 from django.urls import path
-from django.contrib.auth.views import PasswordResetConfirmView
+
 
 from . import views
 
 
 app_name = 'blog'
 
-handler403 = 'blog.views.csrf_failure_error'
-handler404 = 'blog.views.page_not_found_error'
-handler500 = 'blog.views.template_error'
-
 urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
 
-
-    path('profile/<slug:username>/edit/',
-         views.ProfileUpdateView.as_view(),
+    path('profile/<slug:username>/edit_profile/',
+         views.edit_profile,
          name='edit_profile'),
 
     path('profile/<slug:username>/',
          views.ProfileDetailView.as_view(),
          name='profile'),
+
     path('posts/<int:pk>/',
          views.PostDetailView.as_view(),
          name='post_detail'),
@@ -42,5 +38,13 @@ urlpatterns = [
          name='create_post'),
 
     path('logged_in_only/', views.only_for_logged_in),
-    path('<int:pk>/comment/', views.CommentCreateView.as_view(), name='add_comment')
+    
+    path('post/<int:pk>/comment/',
+         views.CommentCreateView.as_view(), name='add_comment'),
+
+    path('<int:pk>/edit_comment/<int:comk>/',
+         views.CommentUpdateView.as_view(), name='edit_comment'),
+
+    path('<int:pk>/delete_comment/<int:comk>/',
+         views.CommentDeleteView.as_view(), name='delete_comment'),
 ]

@@ -9,8 +9,7 @@ DEBUG = True
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'blog:index'
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [] 
 MEDIA_ROOT = BASE_DIR / 'media' 
 
 INSTALLED_APPS = [
@@ -41,7 +40,9 @@ TEMPLATES_PATH = 'templates'
 
 TEMPLATES_DIR = BASE_DIR / TEMPLATES_PATH
 
-EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails' 
 
 TEMPLATES = [
     {
@@ -99,4 +100,4 @@ STATICFILES_DIRS = [BASE_DIR / 'static_dev']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_FAILURE_VIEW = 'blog.views.csrf_failure_error'
+CSRF_FAILURE_VIEW = 'blog.views.permission_denied'

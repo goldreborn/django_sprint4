@@ -96,7 +96,8 @@ class Post(AbstractModel):
         User,
         on_delete=models.CASCADE,
         related_name='posts',
-        verbose_name='Автор публикации'
+        verbose_name='Автор публикации',
+        null=True
     )
 
     tags = models.ManyToManyField(
@@ -130,7 +131,7 @@ class Post(AbstractModel):
         ordering = ['-pub_date']
 
     def get_absolute_url(self):
-        return reverse('blog:detail', kwargs={'pk': self.pk}) 
+        return reverse('blog:detail', kwargs={'pk': self.pk})
 
     def __str__(self) -> str:
         return self.title
@@ -141,10 +142,10 @@ class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='comment',
+        related_name='comments',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ('-created_at',)
