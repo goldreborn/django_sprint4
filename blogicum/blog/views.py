@@ -10,13 +10,9 @@ from django.views.generic import (
 
 from django.urls import reverse_lazy, reverse
 
-from django.db.models.base import Model as Model
-from django.views.generic.edit import FormMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
-from django.http import Http404
-from inspect import getmembers
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
