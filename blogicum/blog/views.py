@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.shortcuts import (
-    HttpResponse as HttpResponse, get_object_or_404, render
+    HttpResponse as HttpResponse, get_object_or_404, render, redirect
 )
 
 from django.views.generic import (
@@ -151,8 +151,12 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._form = PostForm(
-            request.POST or None, instance=self._post, files=request.FILES
+            request.POST or None, instance=self._post
         )
+
+        if not request.user.is_authenticated:
+            return redirect("login")
+
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -177,6 +181,10 @@ class PostDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
 
         if request.method is request.POST:
             self._post.delete()
+        
+        if not request.user.is_authenticated:
+            return redirect("login")
+        
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
