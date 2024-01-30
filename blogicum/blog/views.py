@@ -257,6 +257,9 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
 
+    def get_object(self):
+        return Comment.objects.get(pk=self.kwargs.get('comk'))
+
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._comment = Comment(pk=kwargs['comk'])
@@ -280,6 +283,9 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
     model = Comment
     form_class = CommentForm
+
+    def get_object(self):
+        return Comment.objects.get(pk=self.kwargs.get('comk'))
 
     def dispatch(self, request, *args, **kwargs):
         self._comment = Comment(pk=kwargs['comk'])

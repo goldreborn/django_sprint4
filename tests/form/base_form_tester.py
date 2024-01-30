@@ -50,10 +50,6 @@ class TextareaMismatchException(FormValidationException):
     pass
 
 
-class FormValidationException(Exception):
-    pass
-
-
 class ItemCreatedException(Exception):
     pass
 
