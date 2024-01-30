@@ -328,7 +328,7 @@ def only_for_logged_in():
     )
 
 
-def permission_denied(request, reason=None, template_name='403csrf.html'):
+def permission_denied(request, exception=None, template_name='403csrf.html'):
     return Handler._error_(request, 403)
 
 
