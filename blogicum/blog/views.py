@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.shortcuts import (
-    HttpResponse as HttpResponse, get_object_or_404, render, redirect
+    HttpResponse as HttpResponse, get_object_or_404, redirect
 )
 
 from django.views.generic import (
@@ -157,7 +157,8 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
         )
 
         if not request.user.is_authenticated:
-            return redirect(reverse('blog:post_detail', kwargs={'pk': self._post.pk}))
+            return redirect(reverse('blog:post_detail',
+                                    kwargs={'pk': self._post.pk}))
         elif self._post.author != request.user:
             raise PermissionDenied
 
