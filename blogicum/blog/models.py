@@ -90,7 +90,7 @@ class Post(AbstractModel):
         verbose_name='Дата и время публикации',
         validators=(post_pub_time,),
         help_text='Если установить дату и время в будущем '
-                  '— можно делать отложенные публикации.', default=None)
+                  '— можно делать отложенные публикации.')
 
     author = models.ForeignKey(
         User,
