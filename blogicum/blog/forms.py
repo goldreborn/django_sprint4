@@ -32,7 +32,7 @@ class PostForm(forms.ModelForm):
 
         model = Post
 
-        exclude = ('author', )
+        exclude = ('author', 'comment_count')
 
         widgets = {
             'pub_date': forms.DateInput(attrs={'type': 'date'}),

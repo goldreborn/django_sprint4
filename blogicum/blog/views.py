@@ -217,7 +217,7 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
     template_name = 'blog/profile.html'
 
     def get_object(self):
-        return User.objects.get(username=self.kwargs.get('username'))
+        return get_object_or_404(User, username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
 
