@@ -176,7 +176,6 @@ class PostDetailView(DetailView):
     model = Post
     form_class = CommentForm
     template_name = 'blog/detail.html'
-    
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['pk'])
@@ -210,6 +209,9 @@ class ProfileDetailView(DetailView):
     def dispatch(self, request, *args, **kwargs):
 
         self._user = User(username=kwargs['username'])
+
+        if self._user not in User.objects.all():
+            raise Http404
 
         return super().dispatch(request, *args, **kwargs)
 
