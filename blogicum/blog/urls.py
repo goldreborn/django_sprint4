@@ -9,10 +9,6 @@ app_name = 'blog'
 urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
 
-    path('profile/<slug:username>/edit_profile/',
-         views.edit_profile,
-         name='edit_profile'),
-
     path('profile/<slug:username>/',
          views.ProfileDetailView.as_view(),
          name='profile'),
@@ -39,12 +35,12 @@ urlpatterns = [
 
     path('logged_in_only/', views.only_for_logged_in),
 
-    path('post/<int:pk>/comment/',
+    path('posts/<int:pk>/comment/',
          views.CommentCreateView.as_view(), name='add_comment'),
 
-    path('<int:pk>/edit_comment/<int:comk>/',
+    path('posts/<int:pk>/edit_comment/<int:comk>/',
          views.CommentUpdateView.as_view(), name='edit_comment'),
 
-    path('<int:pk>/delete_comment/<int:comk>/',
+    path('posts/<int:pk>/delete_comment/<int:comk>/',
          views.CommentDeleteView.as_view(), name='delete_comment'),
 ]
