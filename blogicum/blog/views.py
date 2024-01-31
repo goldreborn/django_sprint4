@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.shortcuts import (
-    HttpResponse as HttpResponse, get_object_or_404, redirect, render
+    HttpResponse as HttpResponse, get_object_or_404, redirect
 )
 
 from django.views.generic import (
@@ -94,10 +94,6 @@ class PostCategoryListView(ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
-        '''Я знаю что пагинацию можно сделать в одну строку. Собственно в
-        первом варианте так во всех вью было, тесты не принимают у меня лично такое
-        пишут нет пагинации. Я устал с этим бороться и сделал так :)
-        '''
 
         context = {
             'category': {
@@ -150,17 +146,12 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 
     def dispatch(self, request, *args, **kwargs):
 
-        if kwargs['post_id'] is not None:
+        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
 
-            self._post = get_object_or_404(Post, pk=kwargs['post_id'])
-        else:
-            self._post = None
-
-        if not self.request.user.is_authenticated:
-            redirect(reverse('blog:post_detail',
+        if not request.user.is_authenticated:
+            return redirect(reverse('blog:post_detail',
                                     kwargs={'post_id': self._post.pk}))
-
-        if self._post.author != request.user:
+        elif self._post.author != request.user:
             raise PermissionDenied
 
         self._form = PostForm(
@@ -176,7 +167,7 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        
+
         context['form'] = self._form
         return context
 
