@@ -362,7 +362,7 @@ def only_for_logged_in():
     )
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, exception=''):
     return Handler._error_(request, 403)
 
 
