@@ -221,7 +221,7 @@ class PostDetailView(DetailView):
         ).filter(
             post_id=self._post.pk
         ).order_by(
-            'created_at'
+            '-created_at'
         )
         return context
 
@@ -362,7 +362,7 @@ def only_for_logged_in():
     )
 
 
-def csrf_failure(request, exception):
+def csrf_failure(request, reason=''):
     return Handler._error_(request, 403)
 
 
