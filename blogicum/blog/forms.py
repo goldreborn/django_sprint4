@@ -14,6 +14,11 @@ class CommentForm(forms.ModelForm):
 
         fields = ('text',)
 
+        widgets = {
+            'created_at': forms.DateInput(attrs={'type': 'date'}),
+            'text': forms.Textarea(attrs={'rows': 3}),
+        }
+
 
 class PostForm(forms.ModelForm):
 
