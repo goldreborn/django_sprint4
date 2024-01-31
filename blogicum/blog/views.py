@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.shortcuts import (
-    HttpResponse as HttpResponse, get_object_or_404, redirect, render
+    HttpResponse as HttpResponse, get_object_or_404, redirect
 )
 
 from django.views.generic import (
@@ -19,6 +19,7 @@ from django.views.generic.list import MultipleObjectMixin
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
+from .handler import Handler
 from datetime import date
 
 User = get_user_model()
@@ -86,17 +87,11 @@ class PostListView(ListView):
 class PostCategoryListView(ListView):
     model = Post
     form_class = PostForm
-    ordering = '-created_at'
-    paginate_by = POSTS_PER_PAGE
-
+    ordering = '-pub_date'
     template_name = 'blog/category.html'
 
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
-
-        if self._category.is_published is False:
-            raise Http404
-
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -144,26 +139,24 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
                        kwargs={'username': self._user.get_username()})
 
 
-class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
+class PostUpdateView(UpdateView, LoginRequiredMixin):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
 
     def dispatch(self, request, *args, **kwargs):
 
-        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
+
+        if not request.user.is_authenticated:
+            return redirect(reverse('blog:post_detail',
+                                    kwargs={'pk': self._post.pk}))
+        elif self._post.author != request.user:
+            raise PermissionDenied
 
         self._form = PostForm(
             request.POST or None, instance=self._post
         )
-
-        if not request.user.is_authenticated:
-            return redirect(reverse('blog:post_detail',
-                                    kwargs={'post_id': self._post.pk}))
-
-        if self._post.author != request.user:
-            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -177,24 +170,20 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
         context['form'] = self._form
         return context
 
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
-
 
 class PostDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
     model = Post
     success_url = reverse_lazy('blog:index')
-    pk_url_kwarg = 'post_id'
 
     def dispatch(self, request, *args, **kwargs):
-        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._form = PostForm(instance=self._post)
 
         if request.method is request.POST:
             self._post.delete()
 
-        if not self.request.user.is_authenticated:
-            return redirect('login')
+        if not request.user.is_authenticated:
+            return redirect("login")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -208,10 +197,9 @@ class PostDetailView(DetailView):
     model = Post
     form_class = CommentForm
     template_name = 'blog/detail.html'
-    pk_url_kwarg = 'post_id'
 
     def dispatch(self, request, *args, **kwargs):
-        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -225,7 +213,7 @@ class PostDetailView(DetailView):
         context['comments'] = Comment.objects.prefetch_related(
             'author'
         ).filter(
-            pk=self._post.pk
+            post_id=self._post.pk
         ).order_by(
             '-created_at'
         )
@@ -269,7 +257,7 @@ class CommentCreateView(CreateView, LoginRequiredMixin):
 
         if not request.user.is_authenticated:
             raise PermissionDenied
-        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
+        self._post = get_object_or_404(Post, pk=kwargs['pk'])
         self._user = request.user
 
         return super().dispatch(request, *args, **kwargs)
@@ -282,7 +270,7 @@ class CommentCreateView(CreateView, LoginRequiredMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
+        return reverse('blog:post_detail', kwargs={'pk': self._post.pk})
 
 
 class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
@@ -290,14 +278,14 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
     form_class = CommentForm
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
-    post_id_url_kwarg = 'comk'
+    pk_url_kwarg = 'comk'
 
     def dispatch(self, request, *args, **kwargs):
         self._comment = Comment.objects.get(
             pk=kwargs['comk']
         )
         self._post = Post.objects.get(
-            pk=kwargs['post_id']
+            pk=kwargs['pk']
         )
         self._form = CommentForm(
             request.POST or None
@@ -319,10 +307,10 @@ class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment_confirm_delete.html'
-    post_id_url_kwarg = 'comk'
+    pk_url_kwarg = 'comk'
 
     def dispatch(self, request, *args, **kwargs):
-        self._post = Post.objects.get(pk=kwargs['post_id'])
+        self._post = Post.objects.get(pk=kwargs['pk'])
         self._comment = Comment.objects.get(
             pk=kwargs['comk']
         )
@@ -337,7 +325,7 @@ class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
+        return reverse('blog:post_detail', kwargs={'pk': self._post.pk})
 
 
 class ProfileEditUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
@@ -369,12 +357,12 @@ def only_for_logged_in():
 
 
 def permission_denied(request, exception=None):
-    return render(request, 'pages/403csrf.html', status=403)
+    return Handler._error_(request, 403)
 
 
 def page_not_found(request, exception=None):
-    return render(request, 'pages/404.html', status=404)
+    return Handler._error_(request, 404)
 
 
 def server_error(request, exception=None):
-    return render(request, 'pages/500.html', status=500)
+    return Handler._error_(request, 500)

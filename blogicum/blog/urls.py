@@ -13,7 +13,7 @@ urlpatterns = [
          views.ProfileDetailView.as_view(),
          name='profile'),
 
-    path('/posts/<int:post_id>/',
+    path('posts/<int:pk>/',
          views.PostDetailView.as_view(),
          name='post_detail'),
 
@@ -21,11 +21,11 @@ urlpatterns = [
          views.PostCategoryListView.as_view(),
          name='category_posts'),
 
-    path('posts/<int:post_id>/edit/',
+    path('posts/<int:pk>/edit/',
          views.PostUpdateView.as_view(),
          name='edit_post'),
 
-    path('posts/<int:post_id>/delete/',
+    path('posts/<int:pk>/delete/',
          views.PostDeleteView.as_view(),
          name='delete_post'),
 
@@ -35,12 +35,12 @@ urlpatterns = [
 
     path('logged_in_only/', views.only_for_logged_in),
 
-    path('posts/<int:post_id>/comment/',
+    path('posts/<int:pk>/comment/',
          views.CommentCreateView.as_view(), name='add_comment'),
 
-    path('posts/<int:post_id>/edit_comment/<int:comk>/',
+    path('posts/<int:pk>/edit_comment/<int:comk>/',
          views.CommentUpdateView.as_view(), name='edit_comment'),
 
-    path('posts/<int:post_id>/delete_comment/<int:comk>/',
+    path('posts/<int:pk>/delete_comment/<int:comk>/',
          views.CommentDeleteView.as_view(), name='delete_comment'),
 ]
