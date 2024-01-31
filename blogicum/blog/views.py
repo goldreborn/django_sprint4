@@ -63,7 +63,7 @@ class PermissionMixin(UserPassesTestMixin):
 
 class PostListView(ListView):
     model = Post
-    ordering = '-created_at'
+    ordering = 'created_at'
     paginate_by = POSTS_PER_PAGE
 
     template_name = 'blog/index.html'
@@ -89,6 +89,7 @@ class PostCategoryListView(ListView):
     form_class = PostForm
     ordering = '-pub_date'
     template_name = 'blog/category.html'
+    
 
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
@@ -337,6 +338,7 @@ class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
 class ProfileEditUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
 
     template_name = 'blog/user.html'
+    fields = '__all__'
 
     def get_object(self):
         return User(username=self.kwargs.get('username'))
@@ -362,7 +364,7 @@ def only_for_logged_in():
     )
 
 
-def csrf_failure(request, exception=''):
+def csrf_failure(request, reason=''):
     return Handler._error_(request, 403)
 
 

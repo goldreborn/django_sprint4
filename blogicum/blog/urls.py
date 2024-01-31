@@ -10,6 +10,10 @@ urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
 
     path('profile/<slug:username>/',
+         views.ProfileEditUpdateView.as_view(),
+         name='edit_profile'),
+
+    path('profile/<slug:username>/',
          views.ProfileDetailView.as_view(),
          name='profile'),
 
