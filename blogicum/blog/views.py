@@ -93,7 +93,7 @@ class PostCategoryListView(ListView):
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
 
-        if self._category.is_published:
+        if not self._category.is_published:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 
