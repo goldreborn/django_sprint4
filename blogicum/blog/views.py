@@ -368,7 +368,7 @@ def only_for_logged_in():
     )
 
 
-def permission_denied(request, reason=None):
+def permission_denied(request, exception=None):
     return render(request, 'pages/403csrf.html', status=403)
 
 
