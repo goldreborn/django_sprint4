@@ -89,7 +89,6 @@ class PostCategoryListView(ListView):
     form_class = PostForm
     ordering = '-pub_date'
     template_name = 'blog/category.html'
-    
 
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
