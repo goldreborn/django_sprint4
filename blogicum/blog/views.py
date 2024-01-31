@@ -15,6 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.views.generic.list import MultipleObjectMixin
+from django.http import Http404
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
@@ -91,6 +92,9 @@ class PostCategoryListView(ListView):
 
     def dispatch(self, request, *args, **kwargs):
         self._category = get_object_or_404(Category, slug=kwargs['slug'])
+
+        if Category.objects.get(slug=kwargs['slug']).is_published == False:
+            raise Http404
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -217,7 +221,7 @@ class PostDetailView(DetailView):
         ).filter(
             post_id=self._post.pk
         ).order_by(
-            '-created_at'
+            'created_at'
         )
         return context
 
