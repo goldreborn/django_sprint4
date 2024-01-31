@@ -42,25 +42,6 @@ def comments_count(query):
         ).count()
 
 
-class PermissionMixin(UserPassesTestMixin):
-
-    def dispatch(self, request, *args, **kwargs):
-        self._user = User(username=request.user.get_username())
-        self._post = Post(author=self._user.get_username())
-        self._comment = Comment(author=self._user.get_username())
-        self._ownership = False
-
-        if self._post.author == self._user:
-            self._ownership = True
-        elif self._comment.author == self._user:
-            self._ownership = True
-
-        if self._ownership is not True:
-            raise PermissionDenied
-
-        return super().dispatch(request, *args, **kwargs)
-
-
 class PostListView(ListView):
     model = Post
     ordering = 'created_at'
@@ -117,7 +98,7 @@ class PostCategoryListView(ListView):
         return context
 
 
-class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
+class PostCreateView(CreateView, LoginRequiredMixin):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -142,11 +123,15 @@ class PostCreateView(CreateView, LoginRequiredMixin, PermissionMixin):
                        kwargs={'username': self._user.get_username()})
 
 
-class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
+class PostUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
+
+    def test_func(self):
+        object_ = self.get_object()
+        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -176,9 +161,13 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
         return context
 
 
-class PostDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
+class PostDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
     model = Post
     success_url = reverse_lazy('blog:index')
+
+    def test_func(self):
+        object_ = self.get_object()
+        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
@@ -226,35 +215,6 @@ class PostDetailView(DetailView):
         return context
 
 
-class ProfileDetailView(DetailView, MultipleObjectMixin):
-    model = User
-    ordering = '-created_at'
-    paginate_by = POSTS_PER_PAGE
-    template_name = 'blog/profile.html'
-
-    def get_object(self):
-        return User(username=self.kwargs.get('username'))
-
-    def dispatch(self, request, *args, **kwargs):
-
-        self._user = get_object_or_404(User, username=kwargs['username'])
-
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
-
-        context = {
-            'profile': self._user,
-            'page_obj': Paginator(accuire_querry(Post).filter(
-                author__username=self._user.get_username()
-            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
-        }
-
-        comments_count(context['page_obj'])
-
-        return context
-
-
 class CommentCreateView(CreateView, LoginRequiredMixin):
     model = Comment
     form_class = CommentForm
@@ -279,12 +239,16 @@ class CommentCreateView(CreateView, LoginRequiredMixin):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
+class CommentUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'comk'
+
+    def test_func(self):
+        object_ = self.get_object()
+        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._comment = Comment.objects.get(
@@ -309,11 +273,15 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
         return context
 
 
-class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
+class CommentDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment_confirm_delete.html'
     pk_url_kwarg = 'comk'
+
+    def test_func(self):
+        object_ = self.get_object()
+        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._post = Post.objects.get(pk=kwargs['post_id'])
@@ -334,21 +302,55 @@ class CommentDeleteView(DeleteView, LoginRequiredMixin, PermissionMixin):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class ProfileEditUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
-
-    template_name = 'blog/user.html'
-    fields = '__all__'
+class ProfileDetailView(DetailView, MultipleObjectMixin):
+    model = User
+    ordering = '-created_at'
+    paginate_by = POSTS_PER_PAGE
+    template_name = 'blog/profile.html'
 
     def get_object(self):
         return User(username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
-        self._user = User.objects.get(username=kwargs['username'])
+
+        self._user = self.get_object()
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+
+        context = {
+            'profile': self._user,
+            'page_obj': Paginator(accuire_querry(Post).filter(
+                author__username=self._user.get_username()
+            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
+        }
+
+        comments_count(context['page_obj'])
+
+        return context
+
+
+class ProfileEditView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
+
+    template_name = 'blog/user.html'
+    fields = '__all__'
+    slug_url_kwarg = 'username'
+
+    def get_object(self):
+        return User(username=self.kwargs.get('username'))
+
+    def dispatch(self, request, *args, **kwargs):
+
+        self._user = self.get_object()
+
+        if request.user is not self._user:
+            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 
 
-class PasswordUpdateView(UpdateView, LoginRequiredMixin, PermissionMixin):
+class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
 
     template_name = 'registration/password_change_form.html'
 
@@ -363,7 +365,7 @@ def only_for_logged_in():
     )
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, reason='', template_name='403csrf.html'):
     return Handler._error_(request, 403)
 
 
