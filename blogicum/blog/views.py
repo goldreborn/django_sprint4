@@ -1,4 +1,5 @@
 from typing import Any
+from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (get_object_or_404, redirect)
 
@@ -146,6 +147,11 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
 
         return super().dispatch(request, *args, **kwargs)
 
+    def handle_no_permission(self) -> HttpResponseRedirect:
+        return HttpResponseRedirect(
+            reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
+        )
+
     def form_valid(self, form):
         form.instance.user = self.request.user
         form.save()
@@ -155,7 +161,7 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form'] = self._form
         return context
-    
+
     def get_success_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
