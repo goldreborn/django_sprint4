@@ -140,10 +140,6 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
 
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
 
-        if not request.user.is_authenticated:
-            redirect(reverse('blog:post_detail',
-                             kwargs={'post_id': self._post.pk}))
-
         self._form = PostForm(
             request.POST or None, instance=self._post
         )
@@ -151,16 +147,17 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        if self.request.user.is_authenticated:
-            form.instance.user = self.request.user
-            form.save()
+        form.instance.user = self.request.user
+        form.save()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-
         context['form'] = self._form
         return context
+    
+    def get_success_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
 class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
