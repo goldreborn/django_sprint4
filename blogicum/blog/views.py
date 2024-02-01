@@ -207,7 +207,7 @@ class PostDetailView(DetailView):
         ).filter(
             post_id=self._post.pk
         ).order_by(
-            '-created_at'
+            'created_at'
         )
         return context
 
@@ -296,6 +296,7 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
     ordering = '-created_at'
     paginate_by = POSTS_PER_PAGE
     template_name = 'blog/profile.html'
+    raise_exception = True
 
     def get_object(self):
         return User(username=self.kwargs.get('username'))
@@ -304,8 +305,8 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
 
         self._user = self.get_object()
 
-        if request.user not in User.objects.all():
-            return Http404
+        if User.objects.get(username=request.user.get_username()).DoesNotExist:
+            raise Http404
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -351,7 +352,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, exception):
+def csrf_failure(request, reason=''):
     return Handler._error_(request, 403)
 
 
