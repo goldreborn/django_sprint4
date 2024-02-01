@@ -9,13 +9,13 @@ app_name = 'blog'
 urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
 
-    path('profile/<slug:username>/edit/',
-         views.ProfileEditView.as_view(),
-         name='edit_profile'),
-
-    path('profile/<slug:username>/',
+    path('<slug:username>/',
          views.ProfileDetailView.as_view(),
          name='profile'),
+
+    path('edit/',
+         views.ProfileEditView.as_view(),
+         name='edit_profile'),
 
     path('posts/<int:post_id>/',
          views.PostDetailView.as_view(),

@@ -291,22 +291,18 @@ class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class ProfileDetailView(DetailView, MultipleObjectMixin):
+class ProfileDetailView(LoginRequiredMixin, DetailView):
     model = User
-    ordering = '-created_at'
-    paginate_by = POSTS_PER_PAGE
+    ordering = 'pub_date'
     template_name = 'blog/profile.html'
     raise_exception = True
 
     def get_object(self):
-        return User(username=self.kwargs.get('username'))
+        return User.objects.get(username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
 
         self._user = self.get_object()
-
-        if User.objects.get(username=request.user.get_username()).DoesNotExist:
-            raise Http404
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -324,21 +320,19 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
         return context
 
 
-class ProfileEditView(PermissionMixin, LoginRequiredMixin, UpdateView):
+class ProfileEditView(LoginRequiredMixin, UpdateView):
+    model = User
 
     template_name = 'blog/user.html'
     fields = '__all__'
-    slug_url_kwarg = 'username'
+    slug_field = 'username'
 
     def get_object(self):
-        return User(username=self.kwargs.get('username'))
+        return User.objects.get(username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
 
         self._user = self.get_object()
-
-        if self.request.user is not self._user:
-            raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -352,7 +346,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, exception):
     return Handler._error_(request, 403)
 
 
