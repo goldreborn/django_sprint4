@@ -1,5 +1,4 @@
 from typing import Any
-from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (get_object_or_404, redirect)
 
@@ -47,6 +46,11 @@ class PermissionMixin(UserPassesTestMixin):
     def test_func(self):
         object = self.get_object()
         return object.author == self.request.user
+
+
+class CommentMixin:
+    model = Comment
+    form_class = CommentForm
 
 
 class PostListView(ListView):
@@ -166,10 +170,6 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
 class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
     model = Post
     success_url = reverse_lazy('blog:index')
-
-    def test_func(self):
-        object_ = self.get_object()
-        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
