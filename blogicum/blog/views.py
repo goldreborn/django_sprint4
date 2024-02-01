@@ -1,4 +1,5 @@
 from typing import Any
+from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (
     HttpResponse as HttpResponse, get_object_or_404, redirect
@@ -41,6 +42,13 @@ def comments_count(query):
         mod.comment_count = Comment.objects.filter(
             post__pk=mod.pk
         ).count()
+
+
+class PermissionMixin(UserPassesTestMixin):
+
+    def test_func(self):
+        object = self.get_object()
+        return object.author == self.request.user
 
 
 class PostListView(ListView):
@@ -99,7 +107,7 @@ class PostCategoryListView(ListView):
         return context
 
 
-class PostCreateView(CreateView, LoginRequiredMixin):
+class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -124,15 +132,11 @@ class PostCreateView(CreateView, LoginRequiredMixin):
                        kwargs={'username': self._user.get_username()})
 
 
-class PostUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
+class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
-
-    def test_func(self):
-        object_ = self.get_object()
-        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -162,7 +166,7 @@ class PostUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return context
 
 
-class PostDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
+class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
     model = Post
     success_url = reverse_lazy('blog:index')
 
@@ -216,7 +220,7 @@ class PostDetailView(DetailView):
         return context
 
 
-class CommentCreateView(CreateView, LoginRequiredMixin):
+class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
 
@@ -240,16 +244,12 @@ class CommentCreateView(CreateView, LoginRequiredMixin):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class CommentUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'comk'
-
-    def test_func(self):
-        object_ = self.get_object()
-        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._comment = Comment.objects.get(
@@ -274,15 +274,11 @@ class CommentUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return context
 
 
-class CommentDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
+class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment_confirm_delete.html'
     pk_url_kwarg = 'comk'
-
-    def test_func(self):
-        object_ = self.get_object()
-        return object_.author == self.request.user
 
     def dispatch(self, request, *args, **kwargs):
         self._post = Post.objects.get(pk=kwargs['post_id'])
@@ -316,6 +312,9 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
 
         self._user = self.get_object()
 
+        if request.user not in User.objects.all():
+            return Http404
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -332,7 +331,7 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
         return context
 
 
-class ProfileEditView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
+class ProfileEditView(PermissionMixin, LoginRequiredMixin, UpdateView):
 
     template_name = 'blog/user.html'
     fields = '__all__'
@@ -360,12 +359,6 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def only_for_logged_in():
-    return HttpResponse(
-        'Только для залогиненых пользователей'
-    )
-
-
 def csrf_failure(request, exception):
     return Handler._error_(request, 403)
 
@@ -374,5 +367,5 @@ def page_not_found(request, exception):
     return Handler._error_(request, 404)
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request):
     return Handler._error_(request, 500)
