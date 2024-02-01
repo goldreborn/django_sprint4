@@ -1,4 +1,5 @@
 from typing import Any
+from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (get_object_or_404, redirect)
 
@@ -48,19 +49,11 @@ class PermissionMixin(UserPassesTestMixin):
         return object.author == self.request.user
 
 
-class CommentMixin:
-    model = Comment
-    form_class = CommentForm
-
-
-class PostMixin:
+class PostListView(ListView):
     model = Post
-    form_class = PostForm
-
-
-class PostListView(ListView, PostMixin):
     ordering = '-pub_date'
     paginate_by = POSTS_PER_PAGE
+
     template_name = 'blog/index.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -79,7 +72,9 @@ class PostListView(ListView, PostMixin):
         return query
 
 
-class PostCategoryListView(ListView, PostMixin):
+class PostCategoryListView(ListView):
+    model = Post
+    form_class = PostForm
     ordering = '-pub_date'
     template_name = 'blog/category.html'
 
@@ -110,7 +105,9 @@ class PostCategoryListView(ListView, PostMixin):
         return context
 
 
-class PostCreateView(LoginRequiredMixin, CreateView, PostMixin):
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
     template_name = 'blog/create.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -133,9 +130,9 @@ class PostCreateView(LoginRequiredMixin, CreateView, PostMixin):
                        kwargs={'username': self._user.get_username()})
 
 
-class PostUpdateView(
-    PermissionMixin, LoginRequiredMixin, UpdateView, PostMixin):
-
+class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
+    model = Post
+    form_class = PostForm
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
     raise_exception = True
@@ -166,9 +163,8 @@ class PostUpdateView(
         return context
 
 
-class PostDeleteView(
-    PermissionMixin, LoginRequiredMixin, DeleteView, PostMixin):
-
+class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
+    model = Post
     success_url = reverse_lazy('blog:index')
 
     def dispatch(self, request, *args, **kwargs):
@@ -189,7 +185,9 @@ class PostDeleteView(
         return context
 
 
-class PostDetailView(DetailView, PostMixin):
+class PostDetailView(DetailView):
+    model = Post
+    form_class = CommentForm
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
 
@@ -215,7 +213,9 @@ class PostDetailView(DetailView, PostMixin):
         return context
 
 
-class CommentCreateView(LoginRequiredMixin, CreateView, CommentMixin):
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -237,9 +237,9 @@ class CommentCreateView(LoginRequiredMixin, CreateView, CommentMixin):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class CommentUpdateView(
-    PermissionMixin, LoginRequiredMixin, UpdateView, CommentMixin):
-
+class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'comk'
@@ -267,7 +267,9 @@ class CommentUpdateView(
         return context
 
 
-class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView, CommentMixin):
+class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
+    model = Comment
+    form_class = CommentForm
     template_name = 'blog/comment_confirm_delete.html'
     pk_url_kwarg = 'comk'
 
@@ -295,7 +297,6 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
     ordering = '-created_at'
     paginate_by = POSTS_PER_PAGE
     template_name = 'blog/profile.html'
-    raise_exception = True
 
     def get_object(self):
         return User(username=self.kwargs.get('username'))
@@ -305,7 +306,7 @@ class ProfileDetailView(DetailView, MultipleObjectMixin):
         self._user = self.get_object()
 
         if request.user not in User.objects.all():
-            raise Http404
+            return Http404
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -351,7 +352,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, exception):
     return Handler._error_(request, 403)
 
 
