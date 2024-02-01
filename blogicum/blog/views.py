@@ -1,4 +1,5 @@
 from typing import Any
+from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (get_object_or_404, redirect)
 
@@ -134,6 +135,7 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
     form_class = PostForm
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
+    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
 
@@ -142,8 +144,6 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         if not request.user.is_authenticated:
             return redirect(reverse('blog:post_detail',
                                     kwargs={'post_id': self._post.pk}))
-        elif self._post.author != request.user:
-            raise PermissionDenied
 
         self._form = PostForm(
             request.POST or None, instance=self._post
