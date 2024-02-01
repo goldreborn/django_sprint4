@@ -141,8 +141,7 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
 
         if not request.user.is_authenticated:
-            redirect(reverse('blog:post_detail',
-                                    kwargs={'post_id': self._post.pk}))
+            redirect(reverse('blog:post_detail', kwargs={'post_id': self._post.pk}))
 
         self._form = PostForm(
             request.POST or None, instance=self._post
@@ -252,7 +251,7 @@ class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
             pk=kwargs['post_id']
         )
         self._form = CommentForm(
-            request.POST or None
+            request.POST or None, instance=self._comment
         )
         return super().dispatch(request, *args, **kwargs)
 
@@ -347,7 +346,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, exception=''):
+def csrf_failure(request, reason=''):
     return Handler._error_(request, 403)
 
 
