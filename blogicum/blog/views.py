@@ -11,11 +11,12 @@ from django.views.generic import (
 from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.views.generic.list import MultipleObjectMixin
-from django.http import Http404
+from django.http import Http404, HttpResponseForbidden
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
@@ -40,6 +41,8 @@ def comments_count(query):
         mod.comment_count = Comment.objects.filter(
             post__pk=mod.pk
         ).count()
+
+
 
 
 class PostListView(ListView):
@@ -177,13 +180,13 @@ class PostDeleteView(DeleteView, LoginRequiredMixin, UserPassesTestMixin):
             self._post.delete()
 
         if not request.user.is_authenticated:
-            return redirect("login")
+            return redirect('login')
 
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["form"] = self._form
+        context['form'] = self._form
         return context
 
 
@@ -344,7 +347,7 @@ class ProfileEditView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
 
         self._user = self.get_object()
 
-        if request.user is not self._user:
+        if self.request.user is not self._user:
             raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)
@@ -365,7 +368,7 @@ def only_for_logged_in():
     )
 
 
-def csrf_failure(request, reason='', template_name='403csrf.html'):
+def csrf_failure(request, exception):
     return Handler._error_(request, 403)
 
 
