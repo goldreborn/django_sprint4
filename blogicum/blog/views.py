@@ -50,7 +50,7 @@ class PermissionMixin(UserPassesTestMixin):
 
 class PostListView(ListView):
     model = Post
-    ordering = 'created_at'
+    ordering = '-pub_date'
     paginate_by = POSTS_PER_PAGE
 
     template_name = 'blog/index.html'
