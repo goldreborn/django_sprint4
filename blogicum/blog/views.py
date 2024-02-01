@@ -141,12 +141,8 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
 
         if not request.user.is_authenticated:
-<<<<<<< HEAD
-            redirect(reverse('blog:post_detail', kwargs={'post_id': self._post.pk}))
-=======
             redirect(reverse('blog:post_detail',
                              kwargs={'post_id': self._post.pk}))
->>>>>>> a2f76a342ad5c0816a0a35b68d0560880b4b5517
 
         self._form = PostForm(
             request.POST or None, instance=self._post
