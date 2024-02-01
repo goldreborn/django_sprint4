@@ -1,9 +1,6 @@
 from typing import Any
-from django.http.response import HttpResponseRedirect
 
-from django.shortcuts import (
-    HttpResponse as HttpResponse, get_object_or_404, redirect
-)
+from django.shortcuts import (get_object_or_404, redirect)
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
