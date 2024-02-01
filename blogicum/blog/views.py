@@ -299,14 +299,11 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
     raise_exception = True
 
     def get_object(self):
-        return User.objects.get(username=self.kwargs.get('username'))
+        return get_object_or_404(User, username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
 
         self._user = self.get_object()
-
-        if self._user.DoesNotExist:
-            raise Http404
 
         return super().dispatch(request, *args, **kwargs)
 
