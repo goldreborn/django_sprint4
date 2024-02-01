@@ -303,6 +303,9 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
 
         self._user = self.get_object()
 
+        if self._user.DoesNotExist:
+            raise Http404
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -345,7 +348,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, exception):
+def csrf_failure(request, reason=''):
     return Handler._error_(request, 403)
 
 

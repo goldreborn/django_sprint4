@@ -9,7 +9,7 @@ app_name = 'blog'
 urlpatterns = [
     path('', views.PostListView.as_view(), name='index'),
 
-    path('<slug:username>/',
+    path('profile/<slug:username>/',
          views.ProfileDetailView.as_view(),
          name='profile'),
 
