@@ -16,7 +16,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.views.generic.list import MultipleObjectMixin
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
@@ -41,8 +41,6 @@ def comments_count(query):
         mod.comment_count = Comment.objects.filter(
             post__pk=mod.pk
         ).count()
-
-
 
 
 class PostListView(ListView):
