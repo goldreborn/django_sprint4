@@ -13,7 +13,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
-from django.views.generic.list import MultipleObjectMixin
 from django.http import Http404
 
 from .models import Post, Comment, Category
