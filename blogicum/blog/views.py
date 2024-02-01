@@ -135,14 +135,13 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
     form_class = PostForm
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
-    raise_exception = True
 
     def dispatch(self, request, *args, **kwargs):
 
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
 
         if not request.user.is_authenticated:
-            return redirect(reverse('blog:post_detail',
+            redirect(reverse('blog:post_detail',
                                     kwargs={'post_id': self._post.pk}))
 
         self._form = PostForm(
@@ -152,8 +151,9 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
-        form.save()
+        if self.request.user.is_authenticated:
+            form.instance.user = self.request.user
+            form.save()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -347,7 +347,7 @@ class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, exception=''):
     return Handler._error_(request, 403)
 
 
