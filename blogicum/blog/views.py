@@ -1,5 +1,4 @@
 from typing import Any
-from django.http.response import HttpResponseRedirect
 
 from django.shortcuts import (get_object_or_404, redirect)
 
