@@ -133,7 +133,9 @@ class PostCreateView(LoginRequiredMixin, CreateView, PostMixin):
                        kwargs={'username': self._user.get_username()})
 
 
-class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView, PostMixin):
+class PostUpdateView(
+    PermissionMixin, LoginRequiredMixin, UpdateView, PostMixin):
+
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
     raise_exception = True
@@ -164,7 +166,9 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView, PostMixin)
         return context
 
 
-class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView, PostMixin):
+class PostDeleteView(
+    PermissionMixin, LoginRequiredMixin, DeleteView, PostMixin):
+
     success_url = reverse_lazy('blog:index')
 
     def dispatch(self, request, *args, **kwargs):
@@ -233,7 +237,9 @@ class CommentCreateView(LoginRequiredMixin, CreateView, CommentMixin):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView, CommentMixin):
+class CommentUpdateView(
+    PermissionMixin, LoginRequiredMixin, UpdateView, CommentMixin):
+
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'comk'
