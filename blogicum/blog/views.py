@@ -16,7 +16,9 @@ from django.core.paginator import Paginator
 from django.http import Http404
 
 from .models import Post, Comment, Category
+
 from .forms import PostForm, CommentForm
+
 from .handler import Handler
 from datetime import date
 
