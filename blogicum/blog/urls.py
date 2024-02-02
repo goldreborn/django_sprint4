@@ -13,7 +13,7 @@ urlpatterns = [
          views.ProfileDetailView.as_view(),
          name='profile'),
 
-    path('edit/',
+    path('profile/edit/',
          views.ProfileEditView.as_view(),
          name='edit_profile'),
 
