@@ -12,7 +12,7 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.contrib.auth import get_user_model
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 
 from .models import Post, Comment, Category
 
@@ -282,20 +282,24 @@ class CommentDeleteView(
         return super().form_valid(form)
 
 
-class ProfileDetailView(LoginRequiredMixin, ListView):
+class ProfileDetailView(LoginRequiredMixin, PostListView):
     model = User
     template_name = 'blog/profile.html'
     paginate_by = POSTS_PER_PAGE
     raise_exception = True
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        self._user = get_object_or_404(User, username=kwargs['username'])
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
 
         context = {
             'profile': self.request.user,
             'page_obj': accuire_querry(Post).filter(
-                author__username=self.request.user.username
+                author__username=self._user.get_username()
             ).order_by(
-                'pub_date'
+                '-pub_date'
             )
         }
 
