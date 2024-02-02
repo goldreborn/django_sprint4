@@ -11,7 +11,6 @@ from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.http import Http404
@@ -50,9 +49,38 @@ class PermissionMixin(UserPassesTestMixin):
         return object.author == self.request.user
 
 
-class PostListView(ListView):
+class PostMixin:
     model = Post
-    ordering = '-pub_date'
+    form_class = PostForm
+
+    def get_success_url(self):
+
+        if self.__class__.__name__.__contains__('Delete'):
+            return reverse('blog:index')
+        elif self.__class__.__name__.__contains__('Create'):
+            return reverse(
+                'blog:profile', kwargs={
+                    'username': self.request.user.get_username()
+                }
+            )
+        else:
+            return reverse(
+                'blog:post_detail', kwargs={"post_id": self.kwargs["post_id"]}
+            )
+
+
+class CommentMixin():
+    model = Comment
+    form_class = CommentForm
+
+    def get_success_url(self):
+        return reverse(
+            'blog:post_detail', kwargs={"post_id": self.kwargs["post_id"]}
+        )
+
+
+class PostListView(PostMixin, ListView):
+    ordering = 'pub_date'
     paginate_by = POSTS_PER_PAGE
 
     template_name = 'blog/index.html'
@@ -73,10 +101,8 @@ class PostListView(ListView):
         return query
 
 
-class PostCategoryListView(ListView):
-    model = Post
-    form_class = PostForm
-    ordering = '-pub_date'
+class PostCategoryListView(PostMixin, ListView):
+    ordering = 'pub_date'
     template_name = 'blog/category.html'
 
     def dispatch(self, request, *args, **kwargs):
@@ -106,34 +132,18 @@ class PostCategoryListView(ListView):
         return context
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
-    model = Post
-    form_class = PostForm
+class PostCreateView(PostMixin, LoginRequiredMixin, CreateView):
     template_name = 'blog/create.html'
-
-    def dispatch(self, request, *args, **kwargs):
-
-        self._user = request.user
-
-        if not request.user.is_authenticated:
-            raise PermissionDenied
-
-        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
 
-        form.save()
         form.instance.author = self.request.user
         return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse('blog:profile',
-                       kwargs={'username': self._user.get_username()})
 
-
-class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
-    model = Post
-    form_class = PostForm
+class PostUpdateView(
+    PermissionMixin, LoginRequiredMixin, PostMixin, UpdateView
+):
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
 
@@ -166,9 +176,11 @@ class PostUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
-class PostDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
-    model = Post
+class PostDeleteView(
+    PermissionMixin, LoginRequiredMixin, PostMixin, DeleteView
+):
     success_url = reverse_lazy('blog:index')
+    pk_url_kwarg = 'post_id'
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
@@ -216,33 +228,23 @@ class PostDetailView(DetailView):
         return context
 
 
-class CommentCreateView(LoginRequiredMixin, CreateView):
-    model = Comment
-    form_class = CommentForm
-
-    def dispatch(self, request, *args, **kwargs):
-
-        if not request.user.is_authenticated:
-            raise PermissionDenied
-        self._post = get_object_or_404(Post, pk=kwargs['post_id'])
-        self._user = request.user
-
-        return super().dispatch(request, *args, **kwargs)
+class CommentCreateView(LoginRequiredMixin, CommentMixin, CreateView):
 
     def form_valid(self, form):
 
-        form.instance.author = self._user
-        form.instance.post = self._post
+        form.instance.author = self.request.user
+        form.instance.post = get_object_or_404(Post.objects.filter(
+            is_published=True,
+            category__is_published=True,
+            pub_date__lte=date.today()),
+            id=self.kwargs["post_id"])
 
         return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
-
-class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
-    model = Comment
-    form_class = CommentForm
+class CommentUpdateView(
+    PermissionMixin, LoginRequiredMixin, CommentMixin, UpdateView
+):
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
     pk_url_kwarg = 'comk'
@@ -270,9 +272,9 @@ class CommentUpdateView(PermissionMixin, LoginRequiredMixin, UpdateView):
         return context
 
 
-class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
-    model = Comment
-    form_class = CommentForm
+class CommentDeleteView(
+    PermissionMixin, LoginRequiredMixin, CommentMixin, DeleteView
+):
     template_name = 'blog/comment_confirm_delete.html'
     pk_url_kwarg = 'comk'
 
@@ -290,9 +292,6 @@ class CommentDeleteView(PermissionMixin, LoginRequiredMixin, DeleteView):
         self._comment.delete()
 
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self._post.pk})
 
 
 class ProfileDetailView(LoginRequiredMixin, DetailView):
@@ -338,15 +337,6 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
         self._user = self.get_object()
 
-        return super().dispatch(request, *args, **kwargs)
-
-
-class PasswordUpdateView(UpdateView, LoginRequiredMixin, UserPassesTestMixin):
-
-    template_name = 'registration/password_change_form.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        self._user = User(username=request.user.get_username())
         return super().dispatch(request, *args, **kwargs)
 
 
