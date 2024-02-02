@@ -218,6 +218,7 @@ class PostDetailView(DetailView):
         context['comments'] = Comment.objects.prefetch_related(
             'author'
         ).filter(
+            is_published=True,
             post_id=self._post.pk
         ).order_by(
             'created_at'
