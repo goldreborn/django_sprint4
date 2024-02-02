@@ -209,7 +209,8 @@ class PostDetailView(DetailView):
 
     def get_queryset(self):
         return super().get_queryset().filter(
-            pk=self._post.pk
+            pk=self._post.pk,
+            is_published=True
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
