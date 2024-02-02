@@ -197,7 +197,7 @@ class PostDeleteView(
         return context
 
 
-class PostDetailView(DetailView):
+class PostDetailView(LoginRequiredMixin, DetailView):
     model = Post
     form_class = CommentForm
     template_name = 'blog/detail.html'
@@ -327,15 +327,6 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     template_name = 'blog/user.html'
     fields = '__all__'
     slug_field = 'username'
-
-    def get_object(self):
-        return User.objects.get(username=self.kwargs.get('username'))
-
-    def dispatch(self, request, *args, **kwargs):
-
-        self._user = self.get_object()
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 def csrf_failure(request, exception):
