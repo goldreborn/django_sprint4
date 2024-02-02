@@ -85,9 +85,6 @@ class PostListView(PostMixin, ListView):
 
     template_name = 'blog/index.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
 
         query = accuire_querry(Post).filter(
@@ -250,8 +247,8 @@ class CommentUpdateView(
     pk_url_kwarg = 'comk'
 
     def dispatch(self, request, *args, **kwargs):
-        self._comment = Comment.objects.get(
-            pk=kwargs['comk']
+        self._comment = get_object_or_404(
+            Comment, pk=kwargs['comk']
         )
         self._post = Post.objects.get(
             pk=kwargs['post_id']
