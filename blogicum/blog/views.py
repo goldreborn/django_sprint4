@@ -277,8 +277,8 @@ class CommentDeleteView(
 
     def dispatch(self, request, *args, **kwargs):
         self._post = Post.objects.get(pk=kwargs['post_id'])
-        self._comment = Comment.objects.get(
-            pk=kwargs['comk']
+        self._comment = get_object_or_404(
+            Comment, pk=kwargs['comk']
         )
         self._form = CommentForm(request.POST or None, instance=self._comment)
 
