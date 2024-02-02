@@ -340,7 +340,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         return super().dispatch(request, *args, **kwargs)
 
 
-def csrf_failure(request, reason=''):
+def csrf_failure(request, exception):
     return Handler._error_(request, 403)
 
 
