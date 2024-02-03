@@ -1,5 +1,5 @@
 from typing import Any
-from django.http.response import HttpResponse, HttpResponseRedirect
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 
 from django.views.generic import (
@@ -9,8 +9,6 @@ from django.views.generic import (
 from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-
-from django.http import Http404, HttpRequest
 
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
