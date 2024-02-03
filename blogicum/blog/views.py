@@ -1,7 +1,6 @@
 from typing import Any
-from django.http.response import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.core.paginator import Paginator
+from django.http.response import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
@@ -11,14 +10,14 @@ from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
+from django.http import Http404, HttpRequest
+
+from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
-from django.http import Http404
+from django.core.exceptions import PermissionDenied
 
 from .models import Post, Comment, Category
-
 from .forms import PostForm, CommentForm
-
-from .handler import Handler
 from datetime import date
 
 User = get_user_model()
@@ -192,13 +191,16 @@ class PostDeleteView(
             files=request.FILES or None
         )
 
-        if request.method is request.POST:
-            self._post.delete()
-
         return super().dispatch(request, *args, **kwargs)
 
     def handle_no_permission(self) -> HttpResponseRedirect:
         return HttpResponseRedirect('login')
+
+    def form_valid(self, form):
+        if self.request.method is self.request.POST:
+            self._post.delete()
+
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -315,6 +317,8 @@ class ProfileDetailView(DetailView):
     model = User
     ordering = 'pub_date'
     template_name = 'blog/profile.html'
+    slug_field = 'username'
+    slug_url_kwarg = 'username'
 
     def get_object(self):
         return get_object_or_404(User, username=self.kwargs.get('username'))
@@ -345,20 +349,33 @@ class ProfileDetailView(DetailView):
         return context
 
 
-class ProfileEditView(PermissionMixin, LoginRequiredMixin, UpdateView):
+class ProfileEditView(LoginRequiredMixin, UpdateView):
     model = User
-
     template_name = 'blog/user.html'
+    slug_field = 'username'
+    slug_url_kwarg = 'username'
     fields = '__all__'
+
+    def get_object(self):
+        return get_object_or_404(User, username=self.kwargs.get('username'))
+
+    def dispatch(self, request, *args, **kwargs):
+
+        self._user = self.get_object()
+
+        if self._user != request.user:
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
 
 
 def csrf_failure(request, reason=''):
-    return Handler._error_(request, 403)
+    return render(request, 'pages/403csrf.html', status=403)
 
 
 def page_not_found(request, exception):
-    return Handler._error_(request, 404)
+    return render(request, 'pages/404.html', status=404)
 
 
 def server_error(request):
-    return Handler._error_(request, 500)
+    return render(request, 'pages/500.html', status=500)
