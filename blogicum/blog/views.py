@@ -136,6 +136,11 @@ class PostCreateView(PostMixin, LoginRequiredMixin, CreateView):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data()
+        context['form'] = PostForm()
+        return super().get_context_data(**kwargs)
+
 
 class PostUpdateView(
     PermissionMixin, LoginRequiredMixin, PostMixin, UpdateView
@@ -176,7 +181,7 @@ class PostDeleteView(
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
-        self._form = PostForm(instance=self._post)
+        self._form = PostForm(request.POST or None, instance=self._post)
 
         if request.method is request.POST:
             self._post.delete()
@@ -307,7 +312,7 @@ class ProfileDetailView(DetailView):
                 accuire_querry(
                     Post
                 ).filter(
-                    author__username=self._user.get_username()
+                    author__username=self._user.username
                 ), POSTS_PER_PAGE
             ).get_page(
                 self.request.GET.get('page')
