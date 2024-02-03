@@ -282,20 +282,20 @@ class CommentDeleteView(
         return super().form_valid(form)
 
 
-class ProfileDetailView(LoginRequiredMixin, PostListView):
+class ProfileDetailView(LoginRequiredMixin, ListView):
     model = User
     template_name = 'blog/profile.html'
     paginate_by = POSTS_PER_PAGE
     raise_exception = True
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def dispatch(self, request, *args, **kwargs):
         self._user = get_object_or_404(User, username=kwargs['username'])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
 
         context = {
-            'profile': self.request.user,
+            'profile': self._user,
             'page_obj': accuire_querry(Post).filter(
                 author__username=self._user.get_username()
             ).order_by(
