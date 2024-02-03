@@ -285,7 +285,7 @@ class CommentDeleteView(
         return super().form_valid(form)
 
 
-class ProfileDetailView(LoginRequiredMixin, DetailView):
+class ProfileDetailView(DetailView):
     model = User
     ordering = 'pub_date'
     template_name = 'blog/profile.html'
@@ -304,7 +304,9 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
         context = {
             'profile': self._user,
             'page_obj': Paginator(
-                accuire_querry(Post).filter(
+                accuire_querry(
+                    Post
+                ).filter(
                     author__username=self._user.get_username()
                 ), POSTS_PER_PAGE
             ).get_page(

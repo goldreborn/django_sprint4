@@ -9,7 +9,6 @@ from django.contrib.auth.views import PasswordResetConfirmView
 
 AFTER_REGISTRATION_URL = 'blog:index'
 
-handler403 = 'blog.views.csrf_failure'
 handler404 = 'blog.views.page_not_found'
 handler500 = 'blog.views.server_error'
 
