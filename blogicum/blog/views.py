@@ -10,6 +10,8 @@ from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
+from django.http import Http404
+
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
