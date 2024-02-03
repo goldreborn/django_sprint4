@@ -204,7 +204,6 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         if self._post.author != request.user and not self._post.is_published:
             raise Http404
 
-
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
