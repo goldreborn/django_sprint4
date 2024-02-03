@@ -1,7 +1,7 @@
 from typing import Any
-from django.forms.models import BaseModelForm
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
@@ -12,7 +12,7 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.contrib.auth import get_user_model
-from django.http import Http404, HttpResponse
+from django.http import Http404
 
 from .models import Post, Comment, Category
 
@@ -59,7 +59,7 @@ class PostMixin:
         elif self.__class__.__name__.__contains__('Create'):
             return reverse(
                 'blog:profile', kwargs={
-                    'username': self.request.user.get_username()
+                    'username': self.request.user.username
                 }
             )
         else:
@@ -115,12 +115,12 @@ class PostCategoryListView(PostMixin, ListView):
                 'title': self._category.title,
                 'description': self._category.description
             },
-            'page_obj': accuire_querry(Post).filter(
+            'page_obj': Paginator(accuire_querry(Post).filter(
                 category__slug=self._category.slug,
                 category__is_published=True,
                 is_published=True,
                 pub_date__lte=date.today()
-            )
+            ), POSTS_PER_PAGE).get_page(self.request.GET.get('page'))
         }
 
         comments_count(context['page_obj'])
@@ -132,7 +132,7 @@ class PostCreateView(PostMixin, LoginRequiredMixin, CreateView):
     template_name = 'blog/create.html'
 
     def form_valid(self, form):
-
+        form.save()
         form.instance.author = self.request.user
         return super().form_valid(form)
 
@@ -200,12 +200,16 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
+
+        if self._post.author != request.user and not self._post.is_published:
+            raise Http404
+
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().filter(
-            pk=self._post.pk,
-            is_published=True
+            pk=self._post.pk
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -282,24 +286,30 @@ class CommentDeleteView(
         return super().form_valid(form)
 
 
-class ProfileDetailView(LoginRequiredMixin, ListView):
+class ProfileDetailView(LoginRequiredMixin, DetailView):
     model = User
+    ordering = 'pub_date'
     template_name = 'blog/profile.html'
-    paginate_by = POSTS_PER_PAGE
-    raise_exception = True
+
+    def get_object(self):
+        return get_object_or_404(User, username=self.kwargs.get('username'))
 
     def dispatch(self, request, *args, **kwargs):
-        self._user = get_object_or_404(User, username=kwargs['username'])
+
+        self._user = self.get_object()
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
 
         context = {
             'profile': self._user,
-            'page_obj': accuire_querry(Post).filter(
-                author__username=self._user.get_username()
-            ).order_by(
-                '-pub_date'
+            'page_obj': Paginator(
+                accuire_querry(Post).filter(
+                    author__username=self._user.get_username()
+                ), POSTS_PER_PAGE
+            ).get_page(
+                self.request.GET.get('page')
             )
         }
 
@@ -313,9 +323,6 @@ class ProfileEditView(PermissionMixin, LoginRequiredMixin, UpdateView):
 
     template_name = 'blog/user.html'
     fields = '__all__'
-
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        return super().form_valid(form)
 
 
 def csrf_failure(request, reason=''):

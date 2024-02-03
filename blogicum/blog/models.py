@@ -1,5 +1,4 @@
 from django.db import models
-from .validators import post_pub_time
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
@@ -88,7 +87,6 @@ class Post(AbstractModel):
 
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
-        validators=(post_pub_time,),
         help_text='Если установить дату и время в будущем '
                   '— можно делать отложенные публикации.')
 
