@@ -12,7 +12,7 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.contrib.auth import get_user_model
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import Http404, HttpResponse
 
 from .models import Post, Comment, Category
 
