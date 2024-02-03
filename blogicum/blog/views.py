@@ -68,7 +68,7 @@ class PostMixin:
             )
 
 
-class CommentMixin():
+class CommentMixin:
     model = Comment
     form_class = CommentForm
 
@@ -137,9 +137,9 @@ class PostCreateView(PostMixin, LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data()
+        context = super().get_context_data(**kwargs)
         context['form'] = PostForm()
-        return super().get_context_data(**kwargs)
+        return context
 
 
 class PostUpdateView(
@@ -152,7 +152,9 @@ class PostUpdateView(
 
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
         self._form = PostForm(
-            request.POST or None, instance=self._post
+            request.POST or None,
+            instance=self._post,
+            files=request.FILES or None
         )
 
         return super().dispatch(request, *args, **kwargs)
@@ -163,8 +165,8 @@ class PostUpdateView(
         )
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
         form.save()
+        form.instance.user = self.request.user
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -181,7 +183,10 @@ class PostDeleteView(
 
     def dispatch(self, request, *args, **kwargs):
         self._post = get_object_or_404(Post, pk=kwargs['post_id'])
-        self._form = PostForm(request.POST or None, instance=self._post)
+        self._form = PostForm(
+            instance=self._post,
+            files=request.FILES or None
+        )
 
         if request.method is request.POST:
             self._post.delete()
@@ -238,9 +243,14 @@ class CommentCreateView(LoginRequiredMixin, CommentMixin, CreateView):
             is_published=True,
             category__is_published=True,
             pub_date__lte=date.today()),
-            id=self.kwargs["post_id"])
-
+            id=self.kwargs["post_id"]
+        )
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['form'] = CommentForm()
+        return context
 
 
 class CommentUpdateView(
@@ -280,14 +290,21 @@ class CommentDeleteView(
         self._comment = get_object_or_404(
             Comment, pk=kwargs['comk']
         )
+        self._form = CommentForm(instance=self._comment)
 
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
 
-        self._comment.delete()
+        if self.request.method is self.request.POST:
+            self._comment.delete()
 
         return super().form_valid(form)
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['form'] = self._form
+        return super().get_context_data(**kwargs)
 
 
 class ProfileDetailView(DetailView):
@@ -312,7 +329,7 @@ class ProfileDetailView(DetailView):
                 accuire_querry(
                     Post
                 ).filter(
-                    author__username=self._user.username
+                    author__username=self._user.get_username()
                 ), POSTS_PER_PAGE
             ).get_page(
                 self.request.GET.get('page')
