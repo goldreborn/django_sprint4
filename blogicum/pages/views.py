@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 
 class AboutPage(TemplateView):
-    template_name = 'pages/about.html'   
+    template_name = 'pages/about.html'  
 
 
 class RulesPage(TemplateView):
