@@ -9,8 +9,8 @@ from django.contrib.auth.views import PasswordResetConfirmView
 
 AFTER_REGISTRATION_URL = 'blog:index'
 
-handler404 = 'blog.views.page_not_found'
-handler500 = 'blog.views.server_error'
+handler404 = 'pages.views.page_not_found'
+handler500 = 'pages.views.server_error'
 
 urlpatterns = [
     path('', include('blog.urls', namespace='blog')),

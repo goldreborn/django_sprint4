@@ -1,6 +1,6 @@
 from typing import Any
 from django.http.response import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 
 from django.views.generic import (
     ListView, CreateView, UpdateView, DetailView, DeleteView
@@ -14,7 +14,6 @@ from django.http import Http404
 
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
 
 from .models import Post, Comment, Category
 from .forms import PostForm, CommentForm
@@ -356,26 +355,11 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     slug_url_kwarg = 'username'
     fields = '__all__'
 
-    def get_object(self):
-        return get_object_or_404(User, username=self.kwargs.get('username'))
-
     def dispatch(self, request, *args, **kwargs):
 
         self._user = self.get_object()
 
-        if self._user != request.user:
-            raise PermissionDenied
-
         return super().dispatch(request, *args, **kwargs)
-
-
-def csrf_failure(request, reason=''):
-    return render(request, 'pages/403csrf.html', status=403)
-
-
-def page_not_found(request, exception):
-    return render(request, 'pages/404.html', status=404)
-
-
-def server_error(request):
-    return render(request, 'pages/500.html', status=500)
+    
+    def get_success_url(self) -> str:
+        return reverse('blog:index')
