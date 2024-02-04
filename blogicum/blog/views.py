@@ -360,6 +360,6 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         self._user = self.get_object()
 
         return super().dispatch(request, *args, **kwargs)
-    
+
     def get_success_url(self) -> str:
         return reverse('blog:index')
