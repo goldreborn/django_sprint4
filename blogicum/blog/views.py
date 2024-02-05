@@ -172,12 +172,12 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
         post = get_object_or_404(Post, pk=self.kwargs['post_id'])
 
-        permission_denied = True if post.author != self.request.user else False
+        access_denied = True if post.author != self.request.user else False
         post_hidden = True if not post.is_published else False
         hidden_category = True if not post.category.is_published else False
         in_future = True if post.pub_date > timezone.now() else False
 
-        if permission_denied and any([post_hidden, hidden_category, in_future]):
+        if access_denied and any([post_hidden, hidden_category, in_future]):
             raise Http404
 
         return post
