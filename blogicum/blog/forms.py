@@ -6,14 +6,9 @@ from .models import Post, Comment
 
 class CommentForm(forms.ModelForm):
 
-    ...
-
     class Meta:
-
         model = Comment
-
         fields = ('text',)
-
         widgets = {
             'text': forms.Textarea(attrs={'rows': 3}),
         }
@@ -21,24 +16,10 @@ class CommentForm(forms.ModelForm):
 
 class PostForm(forms.ModelForm):
 
-    def clean(self):
-        super().clean()
-
-        send_mail(
-            subject='Email',
-            message='Найден баг',
-            from_email='post_form@acme.not',
-            recipient_list=['admin@acme.not'],
-            fail_silently=True,
-        )
-
     class Meta:
-
         model = Post
-
         exclude = ('author', 'comment_count')
-
         widgets = {
-            'pub_date': forms.DateInput(attrs={'type': 'date'}),
+            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'text': forms.Textarea(attrs={'rows': 3}),
         }
