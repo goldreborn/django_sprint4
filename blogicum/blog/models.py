@@ -137,6 +137,18 @@ class Comment(models.Model):
         ordering = ('-created_at',)
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
+    
+    """
+    По поводу добавления ordering в модель поста. Я так делал, все работает но
+    автоматические тесты не пропускают выдавая ошибку 
+    AssertionError: Убедитесь, что публикации передаются 
+    в контекст главной страницы отсортированными 
+    по времени их публикации, «от новых к старым».
+    """
 
     def __str__(self) -> str:
-        return 'Комментарий'
+        return f'Объект : {self._meta.verbose_name.capitalize()}\
+                Класс: {self.__class__.__name__}\
+                Пост: {self.post.title}\
+                Создан: {self.created_at}\
+                Автор: {self.author}'
