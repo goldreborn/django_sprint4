@@ -66,14 +66,16 @@ class CommentMixin:
 
 
 class PostListView(PostMixin, ListView):
-    ordering = '-pub_date'
     paginate_by = POSTS_PER_PAGE
     template_name = 'blog/index.html'
-    queryset = accuire_querry(filtered=True, need_comments=True)
+    queryset = accuire_querry(
+        filtered=True, need_comments=True
+    ).order_by(
+        '-pub_date'
+    )
 
 
 class PostCategoryListView(PostMixin, ListView):
-    ordering = '-pub_date'
     template_name = 'blog/category.html'
     paginate_by = POSTS_PER_PAGE
 
@@ -89,6 +91,8 @@ class PostCategoryListView(PostMixin, ListView):
     def get_queryset(self) -> QuerySet[Any]:
         return accuire_querry(filtered=True, need_comments=True).filter(
             category__slug=self.get_category().slug
+        ).order_by(
+            '-pub_date'
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -238,7 +242,6 @@ class CommentDeleteView(
 
 class ProfileDetailView(ListView):
     model = User
-    ordering = '-pub_date'
     template_name = 'blog/profile.html'
     paginate_by = POSTS_PER_PAGE
 
@@ -248,6 +251,8 @@ class ProfileDetailView(ListView):
     def get_queryset(self) -> QuerySet[Any]:
         return accuire_querry(filtered=False, need_comments=True).filter(
             author__username=self.get_object().username
+        ).order_by(
+            '-pub_date'
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
