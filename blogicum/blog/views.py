@@ -8,7 +8,6 @@ from django.urls import reverse_lazy, reverse
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, redirect
 from django.http import Http404
@@ -168,12 +167,12 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
         _post = get_object_or_404(Post, pk=self.kwargs['post_id'])
 
-        permission_denied = True if _post.author != self.request.user else False
+        permissio_denied = True if _post.author != self.request.user else False
         post_hidden = True if not _post.is_published else False
         hidden_categor = True if not _post.category.is_published else False
         in_future = True if _post.pub_date > timezone.now() else False
 
-        if permission_denied and any([post_hidden, hidden_categor, in_future]):
+        if permissio_denied and any([post_hidden, hidden_categor, in_future]):
             raise Http404
 
         return _post
