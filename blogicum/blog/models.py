@@ -111,6 +111,7 @@ class Post(AbstractModel):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        ordering = ['-pub_date']
 
     def get_absolute_url(self):
         return reverse('blog:detail', kwargs={'pk': self.pk})
@@ -138,17 +139,8 @@ class Comment(models.Model):
         verbose_name = 'комментарий'
         verbose_name_plural = 'комментарии'
 
-    """
-    По поводу добавления ordering в модель поста. Я так делал, все работает но
-    автоматические тесты не пропускают выдавая ошибку
-    AssertionError: Убедитесь, что публикации передаются
-    в контекст главной страницы отсортированными
-    по времени их публикации, «от новых к старым».
-    """
-
     def __str__(self) -> str:
-        return f'Объект : {self._meta.verbose_name.capitalize()}\
-                Класс: {self.__class__.__name__}\
-                Пост: {self.post.title}\
-                Создан: {self.created_at}\
-                Автор: {self.author}'
+        return (f'Объект : {self._meta.verbose_name.capitalize()}'
+                f'Класс: {self.__class__.__name__}'
+                f'Создан: {self.created_at}'
+                f'Автор: {self.author}')

@@ -36,7 +36,7 @@ def accuire_querry(filtered=False, need_comments=False):
         req = req.annotate(
             comment_count=Count('comments')
         ).order_by(
-            '-created_at'
+            '-pub_date'
         )
     return req
 
@@ -59,7 +59,7 @@ class CommentMixin:
         )
 
 
-class PlusMixin:
+class CommentDispatchMixin:
 
     def dispatch(self, request, *args, **kwargs):
         get_object_or_404(
@@ -74,8 +74,6 @@ class PostListView(ListView):
     template_name = 'blog/index.html'
     queryset = accuire_querry(
         filtered=True, need_comments=True
-    ).order_by(
-        '-pub_date'
     )
 
 
@@ -92,8 +90,6 @@ class PostCategoryListView(ListView):
     def get_queryset(self) -> QuerySet[Any]:
         return accuire_querry(filtered=True, need_comments=True).filter(
             category__slug=self.get_category().slug
-        ).order_by(
-            '-pub_date'
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -214,7 +210,8 @@ class CommentCreateView(LoginRequiredMixin, CommentMixin, CreateView):
 
 
 class CommentUpdateView(
-    LoginRequiredMixin, PermissionMixin, CommentMixin, PlusMixin, UpdateView
+    LoginRequiredMixin, PermissionMixin, CommentMixin,
+    CommentDispatchMixin, UpdateView
 ):
     template_name = 'blog/comment.html'
     success_url = reverse_lazy('blog:index')
@@ -222,7 +219,8 @@ class CommentUpdateView(
 
 
 class CommentDeleteView(
-    LoginRequiredMixin, PermissionMixin, CommentMixin, PlusMixin, DeleteView
+    LoginRequiredMixin, PermissionMixin, CommentMixin,
+    CommentDispatchMixin, DeleteView
 ):
     template_name = 'blog/comment_confirm_delete.html'
     pk_url_kwarg = 'comment_id'
@@ -239,12 +237,10 @@ class ProfileDetailView(ListView):
     def get_queryset(self) -> QuerySet[Any]:
 
         return accuire_querry(
-            filtered=False if self.get_object() == self.request.user else True,
+            filtered=self.get_object() != self.request.user,
             need_comments=True
         ).filter(
             author__username=self.get_object().username
-        ).order_by(
-            '-pub_date'
         )
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
